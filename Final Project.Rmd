@@ -142,7 +142,7 @@ summarize(db, min_no=min(suicides_no), mean_no=mean(suicides_no), max_no=max(sui
 ### Group entities
 The `group_by` function in essence annotates the rows of a data frame as belonging to a specific group based on the value of some chosen attributes. This call returns a data frame that is grouped by the value of the `district` attribute.
 
-Remember that __`group_by` function always combined with summarize functions__.
+Remember that __`group_by` function is usually followed by a `summarize` functions__.
 ```{r}
 db %>% 
   group_by(year) %>%
@@ -150,20 +150,6 @@ db %>%
 ```
 This function will calculate the total amount of suicide number for each year individually.
 
-
-# Step 4: Model
-Data representational modeling is the process of representing/capturing structure in data based on defining:
-
-- __Data model__: A collection of concepts that describes how data is represented and accessed
-- __Schema__: A description of a specific collection of data, using a given data model
-
-The purpose of defining abstract data representation models is that it allows us to know the structure of the data/information (to some extent) and thus be able to write general purpose code. Lack of a data model makes it difficult to share data across programs, organizations, systems that need to be able to integrate information from multiple sources. 
-
-A data model typically consists of:
-
-- Modeling Constructs: A collection of concepts used to represent the structure in the data. Typically we need to represent types of _entities_, their _attributes_, types of _relationships_ between entities, and relationship attributes
-- Integrity Constraints: Constraints to ensure data integrity (i.e., avoid errors)
-- Manipulation Languages: Constructs for manipulating the data
 
 ### Plotting with ggplot
 Plotting serves many important roles in data analysis. We use it to gain understanding of dataset characteristics throughout analyses and it is a key element of communicating insights we have derived from data analyses with our target audience.
@@ -173,7 +159,7 @@ The `ggplot` package is designed to work well with the `tidyverse` set of packag
 For more information about `ggplot`, go to the website [ggplot](https://www.rdocumentation.org/packages/ggplot2/versions/3.1.1/topics/ggplot)
 
 Let's first create a dot plot of number of suicides happened in different countries in 1987
-```{r}
+```{r, fig.height=10, fig.width=7}
 db %>%
   filter(year == 1987) %>%
   group_by(country) %>%
@@ -200,7 +186,7 @@ There are several frequently used plot in R
 
 #### Bar Graph
 Used to visualize the relationship between a continuous variable to a categorical (or discrete) attribute
-```{r}
+```{r, fig.height = 5, fig.width= 20}
 db %>%
   filter(year == 1987) %>%
   group_by(country) %>%
@@ -232,7 +218,20 @@ db %>%
 Used to visualize the distribution of a numeric attribute based on a categorical attribute
 ```{r}
 db %>%
+  ggplot(mapping=aes(x=country, y=suicides_no)) +
+    geom_boxplot()
+```
+Similar to the Histogram problem, we can see that there are too much values in the graph which make it hard to visualize.
+We can do the similar things by adding a filter at the beinning.
+```{r}
+db %>%
   filter(country == "Albania")%>%
+  ggplot(mapping=aes(x=country, y=suicides_no)) +
+    geom_boxplot()
+```
+We can also manage the height and width of the output plot by adding instructions on ````{r}`
+```{r, fig.height= 5, fig.width= 20}
+db %>%
   ggplot(mapping=aes(x=country, y=suicides_no)) +
     geom_boxplot()
 ```
@@ -287,3 +286,19 @@ There are few major ways of dealing missing data
 
 - Encoding as missing (In the case of categorical attributes, a useful approach is to encode the fact that a value is missing as a __new category__ and include that in subsequent modeling.)
 - Imputation (In the case of numeric values, we can use a simple method for imputation where we replace missing values for a variable with, for instance, the __mean__ of non-missing values)
+
+
+# Step 4: Model
+Data representational modeling is the process of representing/capturing structure in data based on defining:
+
+- __Data model__: A collection of concepts that describes how data is represented and accessed
+- __Schema__: A description of a specific collection of data, using a given data model
+
+The purpose of defining abstract data representation models is that it allows us to know the structure of the data/information (to some extent) and thus be able to write general purpose code. Lack of a data model makes it difficult to share data across programs, organizations, systems that need to be able to integrate information from multiple sources. 
+
+A data model typically consists of:
+
+- Modeling Constructs: A collection of concepts used to represent the structure in the data. Typically we need to represent types of _entities_, their _attributes_, types of _relationships_ between entities, and relationship attributes
+- Integrity Constraints: Constraints to ensure data integrity (i.e., avoid errors)
+- Manipulation Languages: Constructs for manipulating the data
+
