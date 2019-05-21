@@ -12,6 +12,11 @@ library(ggplot2)
 library(broom)
 ```
 
+_Group member:_
+Xiang Li,
+Ruilin Zhang,
+Bosheng Qiu
+
 # INTRODUCTION
 Data science is a "concept to unify statistics, data analysis, machine learning and their related methods" in order to "understand and analyze actual phenomena" with data (_WIKIPEDIA_). In simple terms, data science is defined as gather data from the real world, parse the data into machine formats, use the machine to find patterns and trends, use the findings to build model make predictions and forecastings, and lastly, apply to the model to real world. These five steps in data science are also known as data science pipeline and can be abbreviated as Obtain, Scrub, Explore, Model, Interpret (OSEMN).
 
