@@ -9,6 +9,7 @@ library(tidyverse)
 library(DT)
 library(dplyr)
 library(ggplot2)
+library(broom)
 ```
 
 # INTRODUCTION
@@ -77,13 +78,19 @@ Let's take a look at the first row. We can select a row from a table by its inde
 ```{r}
 slice(db, c(1))
 ```
-If we want to see the values on the specific index of column, we can use the funciton `select(db, 1)`.
+If we want to see the values on the nth column, we can use the funciton `select(db, n)`. Let's select the first column.
 ```{r}
-select(db,c(1))
+head(select(db,c(1)))
 ```
-In these two functions, you may ask why we put '1' in the `c()`. In R, c() means to creat a vector of the values insize, if we want to see more index, we can put them in the vectur and the R will automatically show all of those results.
+The first column contains too many values, to save space, we only display the first six. If we want to we all the different values of the attribute _country_, we can use the command `unique(db$country)`.
+```{r}
+unique(db$country)
+```
+Observe that `db` holds all the data from the csv file, and it is called a __data frame__. To access a column in a data frame we use dollar sign followed by the name of the column. In our example, it is `$country`. Additionally, when we use the dollar sign ($), the column is extracted as a _vector_.
 
-Example of selecting more than 1 rows
+Moreover, in `slice()` and `select()` functions, c() means to creat a vector of the values insize, if we want to see more index, we can put them in the vector and the R will automatically show all of those results.
+
+Example of selecting more than 1 rows:
 ```{r}
 slice(db, c(1,4,50))
 ```
@@ -102,7 +109,7 @@ When using R, one of the most important tool you should know and be familiar wit
 
 The functions implementing our first set of operations have the same argument/value structure. They take a data frame as a first argument and return a data frame. We refer to this as the __data->transform->data__ pattern. This is the core a lot of what we will do in class as part of data analyses. Specifically, we will combine operation into _pipelines_ that manipulate data frames.
 
-The `dplyr` package introduces syntactic sugar to make this pattern explicit. For instance, we can rewrite our previous example using the ¡°pipe¡± operator `%>%`
+The `dplyr` package introduces syntactic sugar to make this pattern explicit. For instance, we can rewrite our previous example using the ??pipe?? operator `%>%`
 ```{r}
 db %>%
   slice(c(1))
@@ -116,7 +123,6 @@ By using `%>%`, We can combine several steps together.
 db %>%
   filter(year == 1987) %>%
   slice(c(1))
-
 ```
 Here, we first select the data for year 1987, then we slice the first row of that dataset.
 
@@ -158,10 +164,19 @@ The `ggplot` package is designed to work well with the `tidyverse` set of packag
 
 For more information about `ggplot`, go to the website [ggplot](https://www.rdocumentation.org/packages/ggplot2/versions/3.1.1/topics/ggplot)
 
-Let's first create a dot plot of number of suicides happened in different countries in 1987
+There are several frequently used plot in R
+
+- Scatter Plot
+- Bar Chart
+- Histogram
+- Boxplot
+
+Since we want to investigate what factors are correlated to the number of suicides, we can make plots that demonstrate the relationship between the number of suicides and other factors.
+
+
+We can investigate the relationship between no. of suicides and country by creating a scatter plot.
 ```{r, fig.height=10, fig.width=7}
 db %>%
-  filter(year == 1987) %>%
   group_by(country) %>%
   summarize(num_suicides= sum(suicides_no)) %>%
   ggplot(mapping=aes(y=country, x=num_suicides)) +
@@ -176,13 +191,6 @@ The central design for `ggplot` is very elegant, the central premise is to chara
 
 In general, the `ggplot` call will have the following structure:
 `<data_frame> %>%    ggplot(mapping=aes(<graphical_characteristic>=<attribute>))    +    geom_<representation>()`
-
-There are several frequently used plot in R
-
-- Scatter Plot (already shown in the previous example)
-- Bar Graph
-- Histogram
-- Boxplot
 
 #### Bar Graph
 Used to visualize the relationship between a continuous variable to a categorical (or discrete) attribute
@@ -201,7 +209,6 @@ Used to visualize the distribution of the values of a numeric attribute
 db %>%
   ggplot(mapping=aes(x=year)) +
     geom_histogram()
-
 ```
 Because we have too much x values stored, you can see that the histogram are all gathered together, and it's very hard to distinguish them.
 So we can either change the binwidth of the graph, or decrease the amount of x values. We can do it by add a filter before we draw the graph.
@@ -302,3 +309,99 @@ A data model typically consists of:
 - Integrity Constraints: Constraints to ensure data integrity (i.e., avoid errors)
 - Manipulation Languages: Constructs for manipulating the data
 
+### Regression Analysis
+Regression analysis is a reliable method of identifying which atrributes have impact on our variable of interest, number of suicides. 
+
+#### Simple Linear Regression
+First let's begin with a generalized linear relationship formula :
+\[y = \beta_0 + \beta_1\cdot x\]
+where
+\[\beta_0 = intercept, \beta_1=slope\]
+y is the number of suicides, and x is the independent variable. In this example, we assume there is a linear relationship between the y values and the x values.
+
+Let's first choose _population_ as our independent variable.
+```{r}
+db %>%
+  ggplot(aes(x=population, y=suicides_no)) +
+    geom_point() + 
+    geom_smooth(method=lm) + 
+    theme_minimal() +
+    labs(title = "simple linear regression", x = "population", y = "number of suicides")
+```
+The blue line is called the regression line. The method of least squares is commonly used to find the regression line. Least squares minimizes the sum of squared residuals, where residual is the vertical distance from each data points to the regression line. 
+
+In R, linear models are built using the `lm()` function.
+```{r}
+lm(suicides_no~population, data=db)
+```
+Recall our formula:
+\[y = \beta_0 + \beta_1\cdot x\]
+In this example,
+\[\beta_0=Intercept=-1.954e+01, \beta_1=population=1.421e-04\]
+Now for different population size, we can predict the number of suicides in this population. Here you might want to ask, is there truely a relationship between these two variables? We will use hypothesis tests in statistics.
+
+A statistical hypothesis, is a claim or assertion either about the value of a single parameter (population characteristic or characteristic of a probability distribution), about the values of several parameters, or about the form of an entire
+probability distribution. In our example, we want to test the value of beta_1.
+
+In any hypothesis-testing problem, there are two contradictory hypotheses under consideration. The null hypothesis, denoted by H_0, is the claim that is initially assumed to be true (the "prior belief" claim). The alternative hypothesis, denoted by H_a, is the assertion that is contradictory to H_0. 
+In our example, our null hypothesis is that there __is no__ significant relationship between number of suicides and population sizes, which can be expressed as
+\[\beta_1=0\]
+Our alternative hypothesis is that there __is__ significant relationship between number of suicides and population sizes, which can be expressed as
+\[\beta_1\neq0\]
+
+To perform hypothesis tests, we use the following R code:
+```{r}
+suicide_fit <- lm(suicides_no~population, data=db)
+suicide_fit %>%
+  tidy() %>%
+  select(term, estimate, statistic, p.value)
+```
+A test statistic is a function of the sample data used as a basis for deciding whether H_0 should be rejected (Jay L. Devore).
+
+The p.value is the probaility, calculated assuming the the null hypothesis is true, of obtaining a value of the statistic at least as contradictory to H_0 as the value calculated from the available sample data (Jay L. Devore).
+
+Before reaching to a conlusion, we need to choose a significance level that is reasonably close to 0. The null hypothesis will be rejected and alternative hypothesis will be favored if p.value is smaller than or equal to our significance level. Otherwize, the null hypothesis will not be rejected. The significance levels used most frequently in practice are 0.5, 0.1, 0.05, 0.01, and 0.001.
+
+From now on, we will fix our significance level at 0.01. Obeserve the our p.value is smaller than our significance level, thus we should favor the alternative hypothesis, that is, 
+\[\beta_1\neq0\]
+
+#### Dummy Variables
+Note that in our previous example, population is a numerical variable and it can be directly put into the regression fomula. What if we want to use a catagorical variable to predict the number of suicides? We can create dummy variables.
+
+Suppose we have a catagorical variable with only two levels, for example, sex (male and female). We can easily code the dummy variable as FEMALE and NOT FEMALE, with 0 as FEMALE and 1 as MALE.
+```{r}
+temp <- db %>%
+  mutate(numerical_sex=ifelse(sex=="female", 1, 0)) %>%
+  select(suicides_no, numerical_sex)
+head(temp)
+```
+Now we can use the new variable to predict number of suicides safely.
+You can follow the procedure mention above to find the regression line and it is left for you as an exercise.
+
+#### Multiple Linear Regression
+What if our dummy variable has more than two levels, such as country and age? We need more dummy variables. These means that we have to put more independent variables into our regression formula. In real world, a variable of interest always has more than 1 correlating independent variables, thus we need to update our simple formla for including more independent varialbes. Our generalized formla for multiple linear regression is
+\[y=\beta_0+\beta_1\cdot x_1+\beta_2\cdot x_2+...+\beta_n\cdot x_n+\]
+where n is the number of independent variables.
+
+We will use sex, population size, and gdp to predict number of suicides.
+```{r}
+temp <- db %>%
+  mutate(numerical_sex=ifelse(sex=="female", 1, 0)) %>%
+  select(suicides_no, numerical_sex, population, `gdp_for_year ($)`)
+suicide_fit <- lm(suicides_no~1+numerical_sex+population+`gdp_for_year ($)`, data=temp)
+suicide_fit
+```
+From this model we can make the statement: "Holding everything else constant, the number of suicides increases by 1 if the gdp decreases by a value of -1.131e-11".
+
+Is this model reliable?
+```{r}
+suicide_fit %>%
+  tidy() %>%
+  select(term, estimate, statistic, p.value)
+```
+We can see that the p.value for each independent variable is smaller than our significance level, 0.01, thus there is strong relationship between number of suicides and sex, population size, and gdp.
+
+We can continue to add other variables into our regression analysis.
+
+# Step 5: Interpret.
+From the suicide dataset we can obtain a general understanding of the different factors that affect the number of suicides. We see that number of suicides varies in different country with different gpd, in different years, and in different groups of people (male or female), etc. However, we cannot answer questions like why are these factors related to the number of suicides. One dataset is no enough for us to gain deep insights into our problem. 
